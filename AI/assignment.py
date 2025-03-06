@@ -3,57 +3,69 @@ import streamlit as st
 # Set page config
 st.set_page_config(page_title="My Digital Footprint", page_icon="🚀", layout="wide")
 
-# Initialize session state for profile details
-if "profile" not in st.session_state:
-    st.session_state.profile = {
-        "name": "Umuhire Kamwanya",
-        "location": "Musanze, Rwanda",
-        "field_of_study": "Software Engineering, Year 3",
-        "university": "INES Ruhengeri",
-        "about_me": "I am Kamwanya, a passionate software engineering student graduating this year. I am excited about technology’s ability to solve real-world problems and improve efficiency. Currently, I am working on my final dissertation and a personal portfolio using Python Streamlit."
-    }
+# Owner's Credentials (For Authentication)
+OWNER_EMAIL = "umuhirenouswaibah@gmail.com"
+OWNER_PASSWORD = "umuhire@250"
+
+# Initialize session state for authentication
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+# Profile Details (Static)
+PROFILE_DETAILS = {
+    "name": "Umuhire Kamwanya",
+    "location": "Musanze, Rwanda",
+    "field_of_study": "Software Engineering, Year 3",
+    "university": "INES Ruhengeri",
+    "about_me": """I am Kamwanya, a passionate software engineering student graduating this year. 
+    I am excited about technology’s ability to solve real-world problems and improve efficiency. 
+    Currently, I am working on my final dissertation and a personal portfolio using Python Streamlit."""
+}
 
 # Sidebar Navigation
 st.sidebar.title("📌 Navigation")
 page = st.sidebar.radio("Go to", ["Home", "Projects", "Skills", "Testimonials", "Contact", "Timeline"])
 
-# Home Page with Editable Profile
+# Authentication Section
 if page == "Home":
     st.title("🚀 My Digital Footprint – Showcasing My Journey")
 
-    uploaded_image = st.file_uploader("Upload Profile Picture", type=["jpg", "png"])
-    if uploaded_image:
-        st.image(uploaded_image, width=150, caption="Profile Picture")
-    else:
-        st.image("person.jpg", width=150, caption="Profile Picture")
+    # Check if the user is authenticated
+    if not st.session_state.authenticated:
+        with st.form("login_form"):
+            st.subheader("🔐 Admin Login (For Profile Editing)")
+            email = st.text_input("Email")  # Removed type="email"
+            password = st.text_input("Password", type="password")
+            login_button = st.form_submit_button("Login")  # Fixed missing submit button
 
-    st.subheader("✍ Edit Personal Info")
+            if login_button:
+                if email == OWNER_EMAIL and password == OWNER_PASSWORD:
+                    st.session_state.authenticated = True
+                    st.success("✅ Login successful! You can now update your profile picture.")
+                else:
+                    st.error("❌ Invalid email or password. Access denied!")
 
-    with st.form("edit_profile_form"):
-        name = st.text_input("Your Name", st.session_state.profile["name"])
-        location = st.text_input("Location", st.session_state.profile["location"])
-        field_of_study = st.text_input("Field of Study", st.session_state.profile["field_of_study"])
-        university = st.text_input("University", st.session_state.profile["university"])
-        about_me = st.text_area("About Me", st.session_state.profile["about_me"])
-        
-        save_changes = st.form_submit_button("Save Changes")
-        if save_changes:
-            st.session_state.profile.update({
-                "name": name,
-                "location": location,
-                "field_of_study": field_of_study,
-                "university": university,
-                "about_me": about_me
-            })
-            st.success("✅ Profile updated successfully!")
+    # Display Profile Section
+    st.subheader("👩‍💻 About Me")
 
-    # Display updated profile details
-    st.write(f"📍 {st.session_state.profile['location']}")
-    st.write(f"📚 {st.session_state.profile['field_of_study']}")
-    st.write(f"🎓 {st.session_state.profile['university']}")
-    st.write(f"📝 {st.session_state.profile['about_me']}")
+    # Show current profile picture
+    st.image("person.jpg", width=150, caption="Profile Picture")  
 
-    # Download resume
+    # Allow only the owner to update profile picture after login
+    if st.session_state.authenticated:
+        uploaded_image = st.file_uploader("Upload a new profile picture", type=["jpg", "png"])
+        if uploaded_image:
+            with open("person.jpg", "wb") as file:
+                file.write(uploaded_image.getbuffer())
+            st.success("✅ Profile picture updated successfully! Refresh to see changes.")
+
+    # Display Profile Details (Static)
+    st.write(f"📍 **Location:** {PROFILE_DETAILS['location']}")
+    st.write(f"📚 **Field of Study:** {PROFILE_DETAILS['field_of_study']}")
+    st.write(f"🎓 **University:** {PROFILE_DETAILS['university']}")
+    st.write(f"📝 **About Me:** {PROFILE_DETAILS['about_me']}")
+
+    # Download Resume
     try:
         with open("resume1.pdf", "rb") as file:
             resume_bytes = file.read()
@@ -79,10 +91,9 @@ elif page == "Projects":
             with st.expander(f"📌 {year} - {description}"):
                 st.write(f"**Project Type:** Individual")
                 st.write(f"**Description:** A system designed for {description}.")
-                st.write("🔗 https://github.com/Kamwanya")
+                st.write("🔗 [GitHub](https://github.com/Kamwanya)")
 
 # Skills Page
-# Skills section
 elif page == "Skills":
     st.title("⚡ Skills and Achievements")
     
@@ -102,30 +113,30 @@ elif page == "Skills":
     skill_React = st.slider("React Js", 0, 100, 75)
     st.progress(skill_React)
 
-    
     st.subheader("🏆 Certifications & Achievements")
-    st.write("✔ High school Diploma in Education, from MIPC, 2019, Rwanda.")
-    st.write("✔ University  Transcript  (In Computer Science), from INES, 2023, Rwanda.")
-    st.write("✔ Certificate of good Food Prefect in high school, From MIPC, 2018, Rwanda.")
-    st.write("✔ University  Transcript  (In Computer Science), from INES, 2023, Rwanda.")
+    st.write("✔ High School Diploma in Education, from MIPC, 2019, Rwanda.")
+    st.write("✔ University Transcript (Computer Science), from INES, 2023, Rwanda.")
+    st.write("✔ Certificate of Good Food Prefect in High School, from MIPC, 2018, Rwanda.")
 
 # Contact Page
 elif page == "Contact":
     st.title("📬 Contact Me")
-    
+
     with st.form("contact_form"):
         name = st.text_input("Your Name")
         email = st.text_input("Your Email")
         message = st.text_area("Your Message")
         submitted = st.form_submit_button("Send Message")
+
         if submitted:
             st.success("✅ Message sent successfully!")
-    
+
     st.write("📧 Email: umuhirenouswaibah@.com")
-    st.write("[🔗 LinkedIn](linkedin.com/in/umuhire-kamwanya-4979071ab)")
+    st.write("[🔗 LinkedIn](https://linkedin.com/in/umuhire-kamwanya-4979071ab)")
     st.write("[📂 GitHub](https://github.com/Kamwanya)")
-# Testimonials section
-if page == "Testimonials":
+
+# Testimonials Page
+elif page == "Testimonials":
     st.title("🗣️ Testimonials")
 
     st.write("🌟 *They used to say 'Girls can't code' 😏 but here my sister Kamwanya proved them wrong🤗 #GirlsPower💪!* – ULaurene")
@@ -147,15 +158,16 @@ if page == "Testimonials":
                 # Display the testimonial after submission
                 st.write(f"🗨 {testimonial_message} — {name} ({relationship})")
             else:
-                st.error("⚠ Please fill in all fields before submitting.")
+                st.error("⚠ Please fill in all fields before submitting.")
+
 # Timeline Section
 elif page == "Timeline":
     st.title("⏳ Academic & Project Milestones")
     milestones = [
         "✅ Year 1: Completed First Major Project",
         "🏆 Year 2: Deep learning about different things",
-        "💼 Year 3: Internship at IKIGUGU Company ",
-        "🌐 8_10_2025:Dissertation Submission",
+        "💼 Year 3: Internship at IKIGUGU Company",
+        "🌐 08-10-2025: Dissertation Submission",
     ]
     for milestone in milestones:
         st.write(milestone)
